@@ -1,6 +1,7 @@
 // Recebe o último valor da válvula, e monta os 2 gráficos ao iniciar a página
 $(document).ready(function(){
   getStatusValvula();
+  getStatusPorcentagem()
   montaGrafico();
 });
 
@@ -119,9 +120,14 @@ function getStatusPorcentagem(){
     url: 'http://157.245.85.94:3000/porcentagem',
     method: 'GET'
   }).done(function(res){
-      valor = res;
+      let valor = res;
+      valor = valor.split('=');
+      valor = parseFloat(valor[1]).toFixed(2);
+      console.log(valor);
       if(valor <= 40){
-        alertify.error(`Nível abaixo do mínimo de segurança: ${(valor).toFixed(2)}%. Verifique imediatamente.`); 
+        alertify.error(`Nível abaixo do mínimo de segurança: ${(valor)}%. Verifique imediatamente.`); 
+      } else if(valor >= 80){
+        alertify.error(`Nível acima do máximo de segurança: ${(valor)}%. Verifique imediatamente.`); 
       }
     })
 }
@@ -129,7 +135,7 @@ function getStatusPorcentagem(){
 window.setInterval(function(){
     getStatusValvula();
     getStatusPorcentagem()
-}, 1000);
+}, 5000);
 
 
 // Caso o botao de Ligar/Desligar valvula seja clicado

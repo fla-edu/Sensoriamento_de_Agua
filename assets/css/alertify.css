@@ -871,6 +871,7 @@
 }
 .alertify-notifier .ajs-message.ajs-error {
   background: rgba(217, 92, 92, 0.95);
+  color: #fff;
 }
 .alertify-notifier .ajs-message.ajs-warning {
   background: rgba(252, 248, 215, 0.95);
