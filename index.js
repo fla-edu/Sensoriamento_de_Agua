@@ -1,4 +1,4 @@
-// Conexões ao MQTT e ao MongoDB
+// Includes das bibliotecas
 const mqtt = require('mqtt');
 const mongoose = require('mongoose');
 const express = require('express');
@@ -7,14 +7,14 @@ const bodyParser = require('body-parser');
 const Schema = mongoose.Schema;
 const app = new express();
 
-////////////////////////////////////////////// CONEXÃO AO BROKER E AO MONGO
+// CONEXÃO AO BROKER E AO MONGO
 var client = mqtt.connect('mqtt://soldier.cloudmqtt.com', {
     username: 'ejywlusy',
     password: '6wNPsfsgCWpX',
     port: 12689
 });
 
-mongoose.connect('mongodb://192.168.0.104/trabalhofinal',{
+mongoose.connect('mongodb+srv://root:P@ssw0rd@cluster0-u5pdp.mongodb.net/controleDeAgua?retryWrites=true&w=majority',{
     useNewUrlParser: true,
     useUnifiedTopology: true
 });
@@ -27,7 +27,7 @@ mongoose.connect('mongodb://192.168.0.104/trabalhofinal',{
     console.log("Moongoose default connection has occured "+err+" error");
  });
 
- ///////////////////////////////////////// CRIANDO SCHEMAS E DEFININDO OS TÓPICOS
+ // CRIANDO SCHEMAS E DEFININDO OS TÓPICOS
  const schemaNivel = new Schema({
     topic: String,
     litros: Number,
@@ -45,16 +45,14 @@ const schemaValvula = new Schema({
 var topic = 'ultraIMM/Nivel';
 var topic2 = 'ultraIMM/valvStatus';
 
-///////////////////////////////////////////// CONEXÃO AOS TÓPICOS
-// Verificando se o Broket MQTT está conectado
+// CONEXÃO AOS TÓPICOS
+// Verificando se o Broker MQTT está conectado
 client.on('connect', function() {
     console.log('connected cloudMQTT');
 
     client.subscribe(topic, function(err){
         if(! err){
             console.log('subscribed Nivel');
-
-            //client.publish(topic, 'Deu certo');
         } else{
             console.log('error');
         }
@@ -62,15 +60,13 @@ client.on('connect', function() {
     client.subscribe(topic2, function(err){
         if(! err){
             console.log('subscribed valvStatus');
-
-            //client.publish(topic, 'Deu certo');
         } else{
             console.log('error');
         }
     });
 });
 
-///////////////////////////////////////////// INSERINDO OS VALORES DO BROKER NO MONGO
+// INSERINDO OS VALORES DO BROKER NO MONGO
 function insereValvulaMongo(message){
     let d = new Date();
     let dados2 = mongoose.model('dados2', schemaValvula);
@@ -85,8 +81,6 @@ function insereValvulaMongo(message){
     console.log('Inseriu Válvula: ' +message.toString());
 }
 
-
-
 client.on('message', function(topic, message){
     
     if(topic == 'ultraIMM/Nivel'){
@@ -96,6 +90,7 @@ client.on('message', function(topic, message){
         let porcentagem = ((tamanhoCaixa - message)/tamanhoCaixa);
         let litros = porcentagem * capacidadeCaixa;
         let dados = mongoose.model('dados', schemaNivel);
+        porcentagem *= 100;
         const dado = new dados({
             topic: "ultraIMM/Nivel",
             litros: litros,
@@ -118,7 +113,7 @@ client.on('message', function(topic2, message){
 
 });
 
-//////////////////////////////////////////////////// BUSCANDO NO MONGO
+// BUSCANDO OS DADOS NO MONGO
 async function retornaUltimoLitro(){
     let dados = mongoose.model('dados', schemaNivel);
     let data = await dados.find({}).sort({'date': -1}).limit(1);
@@ -137,7 +132,7 @@ async function retornaUltimoStatusValvula(){
     return data[0].valor;
 }
 
-///////////////////////////////////////////////////// ROTAS
+// ROTAS
 app.use(cors());
 app.use(bodyParser.json()); 
 

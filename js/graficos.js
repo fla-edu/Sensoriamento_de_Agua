@@ -1,3 +1,4 @@
+// Recebe o último valor da válvula, e monta os 2 gráficos ao iniciar a página
 $(document).ready(function(){
   getStatusValvula();
   montaGrafico();
@@ -24,9 +25,9 @@ function montaGrafico() {
             cylfillcolor: "#6eabf0",
             plottooltext: "Monitoramento do Nível de Água</b>",
             cylfillhoveralpha: "85",
-            // refreshInterval: "1",
-            // refreshInstantly: "1",
-            dataStreamUrl: 'http://192.168.0.104:3000/litros',
+            refreshInterval: "1",
+            refreshInstantly: "1",
+            dataStreamUrl: 'http://157.245.85.94:3000/litros',
             theme: "umber",
             "bgalpha": "100",
             "bgColor": "#222428",
@@ -52,12 +53,14 @@ function montaGrafico() {
           chart: {
             caption: "Monitoramento do Nível de Água",
             lowerlimit: "0",
-            upperlimit: "1",
+            upperlimit: "100",
             showvalue: "1",
             numbersuffix: "%",
             theme: "umber",
             showtooltip: "0",
-            dataStreamUrl: 'http://192.168.0.104:3000/porcentagem',
+            refreshInterval: "1",
+            refreshInstantly: "1",
+            dataStreamUrl: 'http://157.245.85.94:3000/porcentagem',
             "bgalpha": "100",
             "bgColor": "#222428",
             "borderThickness": "0",
@@ -69,27 +72,27 @@ function montaGrafico() {
             color: [
               {
                 minvalue: "0",
-                maxvalue: "0.50",
+                maxvalue: "40",
                 code: "#F2726F"
               },
               {
-                minvalue: "0.50",
-                maxvalue: "0.60",
+                minvalue: "40",
+                maxvalue: "50",
                 code: "#FFC533"
               },
               {
-                minvalue: "0.60",
-                maxvalue: "0.80",
+                minvalue: "50",
+                maxvalue: "70",
                 code: "#62B58F"
               },
               {
-                  minvalue: "0.80",
-                  maxvalue: "0.90",
+                  minvalue: "70",
+                  maxvalue: "80",
                   code: "#FFC533"
               },
               {
-                minvalue: "0.90",
-                maxvalue: "1",
+                minvalue: "80",
+                maxvalue: "100",
                 code: "#F2726F"
               }
             ]
@@ -100,10 +103,10 @@ function montaGrafico() {
     
 }
 
-
+// AJAX que requisita o ultimo valor da valvula
 function getStatusValvula(){
   $.ajax({
-    url: 'http://192.168.0.104:3000/valvula',
+    url: 'http://157.245.85.94:3000/valvula',
     method: 'GET'
   }).done(function(res){
       valor = res;
@@ -111,17 +114,32 @@ function getStatusValvula(){
     })
 }
 
+function getStatusPorcentagem(){
+  $.ajax({
+    url: 'http://157.245.85.94:3000/porcentagem',
+    method: 'GET'
+  }).done(function(res){
+      valor = res;
+      if(valor <= 40){
+        alertify.error(`Nível abaixo do mínimo de segurança: ${(valor).toFixed(2)}%. Verifique imediatamente.`); 
+      }
+    })
+}
+// A cada 1 segundo, verifica o status da valvula 
 window.setInterval(function(){
     getStatusValvula();
+    getStatusPorcentagem()
 }, 1000);
 
 
+// Caso o botao de Ligar/Desligar valvula seja clicado
+// Ele envia esse valor para o MongoDB e transmite ao sensor
 function setValvula(){
 
   let valor = $('#btnValvula').val();
   
   $.ajax({
-    url: 'http://192.168.0.104:3000/',
+    url: 'http://157.245.85.94:3000/',
     dataType: 'json',
     contentType: 'application/json',
     data: JSON.stringify({
@@ -142,17 +160,20 @@ $(document).on('click', '#btnValvula', function(){
 
 });
 
+// Caso o valor da valvula seja alterado, ele muda a cor e o valor do Botao
 function alteraValorBotaoValvula(valor){
-  if(valor == 0){
+  
+  if(valor == 1){
     $('#btnValvula').removeClass('btn-success');
     $('#btnValvula').addClass('btn-danger');
-    $('#btnValvula').val('1');
+    $('#btnValvula').val('0');
     $('#btnValvula').text('Desligar Válvula');
+    
   }
-  if(valor == 1){
+  if(valor == 0){
     $('#btnValvula').removeClass('btn-danger');
     $('#btnValvula').addClass('btn-success');
-    $('#btnValvula').val('0');
+    $('#btnValvula').val('1');
     $('#btnValvula').text('Ligar Válvula');
   }
 }
